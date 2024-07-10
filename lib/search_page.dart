@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:recipe_app/Recipies/recipie.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:recipe_app/recipe_page_file.dart';
-
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -11,24 +10,38 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  List<Recipie> subjects=allRecipie;
+  List<Map<String, dynamic>> allDishes = [];
+  List<Map<String, dynamic>> filteredDishes = [];
+  final _searchController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    fetchDishes();
+  }
 
-  //Search subject
-  void searchSubject(String query){
-    final suggestions=allRecipie.where((subject){
-      final subjectTitle=subject.name.toLowerCase();
-      final input=query.toLowerCase();
-      return subjectTitle.contains(input);
-    }).toList();
+  Future<void> fetchDishes() async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    CollectionReference dishesRef = firestore.collection('dishes');
+
+    QuerySnapshot querySnapshot = await dishesRef.get();
     setState(() {
-      subjects=suggestions;
+      allDishes = querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      filteredDishes = allDishes;
     });
   }
 
+  void searchDishes(String query) {
+    final suggestions = allDishes.where((dish) {
+      final dishName = dish['name'].toString().toLowerCase();
+      final input = query.toLowerCase();
+      return dishName.contains(input);
+    }).toList();
+    setState(() {
+      filteredDishes = suggestions;
+    });
+  }
 
-
-  final _searchController=TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,38 +56,40 @@ class _SearchPageState extends State<SearchPage> {
               textCapitalization: TextCapitalization.words,
               controller: _searchController,
               decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: "Search Recipe",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue),
-                  )
+                prefixIcon: Icon(Icons.search),
+                hintText: "Search Recipe",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
               ),
-              onChanged: searchSubject,
+              onChanged: searchDishes,
             ),
           ),
           Expanded(
-              child: ListView.builder(
-                itemCount: subjects.length,
-                itemBuilder:(context,index){
-                  final subject=subjects[index];
-                  return ListTile(
-                    onTap: ()=>Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          //Route to subject Page
-                            builder: (context)=>RecipiePage(name: subject),
-                        )
-                    ),
-                    title: Text(subject.name),
-                    trailing: Icon(Icons.arrow_forward_ios),
-                  );
-                },
-              )
+            child: ListView.builder(
+              itemCount: filteredDishes.length,
+              itemBuilder: (context, index) {
+                final dish = filteredDishes[index];
+                return ListTile(
+                  title: Text(dish['name']),
+                  trailing: Icon(Icons.arrow_forward_ios),
+
+                  onTap: () {
+                    String n=dish['name'];
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RecipiePage(name: n),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
     );
-
   }
 }

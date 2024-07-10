@@ -15,7 +15,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFFE91E63),
+        backgroundColor: Colors.deepOrange,
         title: Text(
           "Home Page",
           style: TextStyle(color: Colors.white),
@@ -52,6 +52,8 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             SizedBox(height: 30,),
+            Text("Popular Dishes",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
+            SizedBox(height: 10,),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40.0),
               child: Row(
